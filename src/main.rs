@@ -6,7 +6,6 @@ mod components;
 mod rectangle;
 mod resources;
 mod systems;
-mod utils;
 
 fn main() {
     // init_rectangle_animation();
