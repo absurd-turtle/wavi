@@ -79,22 +79,33 @@ fn shape_anim_transform(mut shape_query: Query<&mut Transform, With<Shape>>) {
     }
 }
 
-pub fn read_beat(beats: Res<Beats>, mut shape_query: Query<&mut Transform, With<Shape>>) {
+fn increment_react_count(beats: Res<Beats>) {
+    let react = beats.react_count.load(std::sync::atomic::Ordering::Relaxed);
+    if react == 255 {
+        beats
+            .react_count
+            .store(0, std::sync::atomic::Ordering::Relaxed);
+    } else {
+        beats
+            .react_count
+            .store(react + 1, std::sync::atomic::Ordering::Relaxed);
+    }
+}
+
+fn check_beat(beats: &Res<Beats>) -> bool {
     let detect = beats
         .detect_count
         .load(std::sync::atomic::Ordering::Relaxed);
     let react = beats.react_count.load(std::sync::atomic::Ordering::Relaxed);
-    println!("{}", detect);
-    if detect != react {
-        if react == 255 {
-            beats
-                .react_count
-                .store(0, std::sync::atomic::Ordering::Relaxed);
-        } else {
-            beats
-                .react_count
-                .store(react + 1, std::sync::atomic::Ordering::Relaxed);
-        }
+    println!("detect: {}", detect);
+    println!("react: {}", react);
+    println!("{}", detect != react);
+    detect != react
+}
+
+pub fn transform_anim_on_beat(beats: Res<Beats>, shape_query: Query<&mut Transform, With<Shape>>) {
+    if check_beat(&beats) {
+        increment_react_count(beats);
 
         println!("do something");
         shape_anim_transform(shape_query);
@@ -177,6 +188,7 @@ pub fn update_bloom_settings(
     mut commands: Commands,
     keycode: Res<Input<KeyCode>>,
     time: Res<Time>,
+    beats: Res<Beats>,
 ) {
     let bloom_settings = camera.single_mut();
     let mut text = text.single_mut();
@@ -219,6 +231,16 @@ pub fn update_bloom_settings(
             }
 
             let dt = time.delta_seconds();
+
+            if check_beat(&beats) {
+                let new = bloom_settings.intensity + 0.1;
+                bloom_settings.intensity = if new > 0.3 { 0.3 } else { new };
+                println!("{}", dt);
+                println!("intensity: {}", bloom_settings.intensity);
+                increment_react_count(beats);
+            } else {
+                bloom_settings.intensity -= dt / 4.0;
+            }
 
             if keycode.pressed(KeyCode::A) {
                 bloom_settings.intensity -= dt / 10.0;

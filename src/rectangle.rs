@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::{
     components::Shape,
     resources::Beats,
-    systems::{init_beat_tracker, read_beat},
+    systems::{init_beat_tracker, transform_anim_on_beat},
 };
 
 pub fn init_rectangle_animation() {
@@ -49,6 +49,6 @@ impl Plugin for BeatPlugin {
             react_count: Arc::new(AtomicU8::new(0)),
         });
         app.add_systems(Startup, init_beat_tracker);
-        app.add_systems(Update, read_beat);
+        app.add_systems(Update, transform_anim_on_beat);
     }
 }

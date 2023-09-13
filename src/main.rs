@@ -9,6 +9,6 @@ mod systems;
 mod utils;
 
 fn main() {
-    init_rectangle_animation();
-    // init_bloom_animation();
+    // init_rectangle_animation();
+    init_bloom_animation();
 }
